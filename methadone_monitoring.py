@@ -17,7 +17,7 @@ def calculate_methadone_concentration(dose, weight, half_life, time_since_last_d
         # Concentration pour une seule prise
         concentration = (dose / (volume_distribution * weight)) * np.exp(-0.693 * time_since_last_dose / half_life)
     
-    return concentration * 1000  # conversion en ng/mL
+    return max(concentration * 1000, 0)  # conversion en ng/mL et éviter valeurs négatives
 
 def evaluate_metabolism(methadone_measured, eddp_measured):
     """
@@ -51,6 +51,7 @@ def plot_methadone_curves(dose, weight, half_life, time_since_last_dose, methado
     time = np.linspace(0, 48, 100)  # Temps en heures
     patient_concentrations = [calculate_methadone_concentration(dose, weight, half_life, t) for t in time]
     standard_concentrations = [calculate_methadone_concentration(dose, weight, 24, t) for t in time]  # Demi-vie standard de 24h
+    expected_methadone = calculate_methadone_concentration(dose, weight, half_life, time_since_last_dose)
     
     fig, ax = plt.subplots()
     ax.plot(time, patient_concentrations, label="Courbe du patient", color='blue')
@@ -60,6 +61,7 @@ def plot_methadone_curves(dose, weight, half_life, time_since_last_dose, methado
     ax.axhline(600, color='red', linestyle='--', label='Risque de toxicité (600 ng/mL)')
     ax.axvline(time_since_last_dose, color='purple', linestyle='--', label='Moment du prélèvement')
     ax.scatter([time_since_last_dose], [methadone_measured], color='red', label='Méthadonémie mesurée')
+    ax.scatter([time_since_last_dose], [expected_methadone], color='orange', marker='o', label='Méthadonémie attendue')
     ax.set_xlabel("Temps depuis la dernière prise (h)")
     ax.set_ylabel("Concentration de méthadone (ng/mL)")
     ax.set_title("Courbes pharmacocinétiques : Patient vs Standard")
