@@ -10,9 +10,9 @@ def calculate_methadone_concentration(dose, weight, half_life, time_since_last_d
     clearance = (0.693 / half_life) * (volume_distribution * weight)
     
     if steady_state:
-        # Ajustement pour un patient à l'équilibre plasmatique (prise chronique)
-        accumulation_factor = 1 / (1 - np.exp(-0.693 * 24 / half_life))
-        concentration = (dose * accumulation_factor / (volume_distribution * weight)) * np.exp(-0.693 * time_since_last_dose / half_life)
+        # Équilibre atteint après 5 demi-vies
+        equilibrium_factor = 1 / (1 - np.exp(-0.693 * 5))
+        concentration = (dose * equilibrium_factor / (volume_distribution * weight)) * np.exp(-0.693 * time_since_last_dose / half_life)
     else:
         # Concentration pour une seule prise
         concentration = (dose / (volume_distribution * weight)) * np.exp(-0.693 * time_since_last_dose / half_life)
@@ -35,8 +35,8 @@ def plot_methadone_curves(dose, weight, half_life, time_since_last_dose, methado
     patient_concentrations = [calculate_methadone_concentration(dose, weight, half_life, t, steady_state=False) for t in time]
     
     fig, ax = plt.subplots()
-    ax.plot(time, expected_concentrations, label="Courbe du patient (observée)", linestyle='dashed', color='gray')
-    ax.plot(time, patient_concentrations, label="Courbe attendue (modèle)", color='blue')
+    ax.plot(time, expected_concentrations, label="Courbe attendue (modèle)", color='blue')
+    ax.plot(time, patient_concentrations, label="Courbe du patient (observée)", linestyle='dashed', color='gray')
     ax.axhline(100, color='green', linestyle='--', label='Seuil bas (100 ng/mL)')
     ax.axhline(400, color='blue', linestyle='--', label='Zone thérapeutique (400 ng/mL)')
     ax.axhline(600, color='red', linestyle='--', label='Risque de toxicité (600 ng/mL)')
