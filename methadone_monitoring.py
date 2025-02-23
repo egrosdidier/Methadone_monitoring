@@ -31,12 +31,12 @@ def plot_methadone_curves(dose, weight, half_life, time_since_last_dose, methado
     Trace les courbes pharmacocinétiques de la méthadone pour le patient et une courbe attendue (modèle).
     """
     time = np.linspace(0, 48, 100)
-    expected_concentrations = [calculate_methadone_concentration(dose, weight, half_life, t, steady_state=True) for t in time]
     patient_concentrations = [calculate_methadone_concentration(dose, weight, half_life, t, steady_state=False) for t in time]
+    expected_concentrations = [calculate_methadone_concentration(dose, weight, half_life, t, steady_state=True) for t in time]
     
     fig, ax = plt.subplots()
-    ax.plot(time, expected_concentrations, label="Courbe attendue (modèle)", linestyle='dashed', color='gray')
     ax.plot(time, patient_concentrations, label="Courbe du patient (observée)", color='blue')
+    ax.plot(time, expected_concentrations, label="Courbe attendue (modèle)", linestyle='dashed', color='gray')
     ax.axhline(100, color='green', linestyle='--', label='Seuil bas (100 ng/mL)')
     ax.axhline(400, color='blue', linestyle='--', label='Zone thérapeutique (400 ng/mL)')
     ax.axhline(600, color='red', linestyle='--', label='Risque de toxicité (600 ng/mL)')
