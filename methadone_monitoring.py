@@ -40,12 +40,12 @@ def evaluate_metabolism(methadone_measured, eddp_measured):
     if eddp_measured == 0:
         return "Métabolisation très lente"
     ratio = methadone_measured / eddp_measured
-    if ratio > 2.0:
+    if ratio > 2.5:
         return "Métaboliseur lent"
-    elif ratio < 1.0:
-        return "Métaboliseur rapide"
-    else:
+    elif 1.0 <= ratio <= 2.5:
         return "Métaboliseur normal"
+    else:
+        return "Métaboliseur rapide"
 
 def assess_risk(methadone_measured, expected_methadone):
     """
