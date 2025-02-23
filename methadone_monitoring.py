@@ -2,13 +2,21 @@ import numpy as np
 import matplotlib.pyplot as plt
 import streamlit as st
 
-def calculate_methadone_concentration(dose, weight, half_life, time_since_last_dose):
+def calculate_methadone_concentration(dose, weight, half_life, time_since_last_dose, steady_state=True):
     """
     Estime la concentration résiduelle de méthadone en fonction de la dose, du poids et du délai depuis la dernière prise.
     """
     volume_distribution = 4  # L/kg (valeur moyenne)
     clearance = (0.693 / half_life) * (volume_distribution * weight)
-    concentration = (dose / (volume_distribution * weight)) * np.exp(-0.693 * time_since_last_dose / half_life)
+    
+    if steady_state:
+        # Ajustement pour un patient à l'équilibre plasmatique (prise chronique)
+        accumulation_factor = 1 / (1 - np.exp(-0.693 * 24 / half_life))
+        concentration = (dose / (volume_distribution * weight)) * accumulation_factor * np.exp(-0.693 * time_since_last_dose / half_life)
+    else:
+        # Concentration pour une seule prise
+        concentration = (dose / (volume_distribution * weight)) * np.exp(-0.693 * time_since_last_dose / half_life)
+    
     return concentration * 1000  # conversion en ng/mL
 
 def evaluate_metabolism(methadone_measured, eddp_measured):
@@ -69,11 +77,11 @@ methadone_measured = st.number_input("Méthadonémie mesurée (ng/mL)", min_valu
 eddp_measured = st.number_input("EDDP mesuré (ng/mL)", min_value=0, max_value=2000, value=120)
 
 if st.button("Évaluer"):
-    methadone_expected = calculate_methadone_concentration(dose, weight, half_life, time_since_last_dose)
+    methadone_expected = calculate_methadone_concentration(dose, weight, half_life, time_since_last_dose, steady_state=True)
     metabolism_type = evaluate_metabolism(methadone_measured, eddp_measured)
     risk_evaluation = assess_risk(methadone_measured, methadone_expected)
     
-    st.write(f"**Méthadonémie attendue**: {methadone_expected:.2f} ng/mL")
+    st.write(f"**Méthadonémie attendue (à l'équilibre)**: {methadone_expected:.2f} ng/mL")
     st.write(f"**Profil métabolique**: {metabolism_type}")
     st.write(f"**Évaluation du risque**: {risk_evaluation}")
     
