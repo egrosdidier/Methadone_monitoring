@@ -19,24 +19,24 @@ def calculate_methadone_concentration(dose, weight, half_life, time_since_last_d
     
     return max(concentration * 1000, 0)  # conversion en ng/mL et éviter valeurs négatives
 
-def calculate_eddp_concentration(methadone_measured):
+def calculate_eddp_concentration(methadone_expected):
     """
-    Estime la concentration attendue d'EDDP en fonction de la méthadonémie mesurée.
+    Estime la concentration attendue d'EDDP en fonction de la méthadonémie attendue.
     """
-    expected_eddp = methadone_measured * 0.3  # Ratio moyen EDDP/Méthadone ajusté
+    expected_eddp = methadone_expected * 0.3  # Ratio moyen EDDP/Méthadone ajusté
     return expected_eddp
 
 def plot_methadone_curves(dose, weight, half_life, time_since_last_dose, methadone_measured):
     """
-    Trace les courbes pharmacocinétiques de la méthadone pour le patient et une courbe standard.
+    Trace les courbes pharmacocinétiques de la méthadone pour le patient et une courbe attendue (modèle).
     """
     time = np.linspace(0, 48, 100)
-    patient_concentrations = [calculate_methadone_concentration(dose, weight, half_life, t, steady_state=False) for t in time]
     expected_concentrations = [calculate_methadone_concentration(dose, weight, half_life, t, steady_state=True) for t in time]
+    patient_concentrations = [calculate_methadone_concentration(dose, weight, half_life, t, steady_state=False) for t in time]
     
     fig, ax = plt.subplots()
-    ax.plot(time, patient_concentrations, label="Courbe du patient (observée)", color='blue')
     ax.plot(time, expected_concentrations, label="Courbe attendue (modèle)", linestyle='dashed', color='gray')
+    ax.plot(time, patient_concentrations, label="Courbe du patient (observée)", color='blue')
     ax.axhline(100, color='green', linestyle='--', label='Seuil bas (100 ng/mL)')
     ax.axhline(400, color='blue', linestyle='--', label='Zone thérapeutique (400 ng/mL)')
     ax.axhline(600, color='red', linestyle='--', label='Risque de toxicité (600 ng/mL)')
@@ -64,3 +64,10 @@ if st.button("Évaluer"):
     expected_methadone, expected_eddp = plot_methadone_curves(dose, weight, half_life, time_since_last_dose, methadone_measured)
     st.write(f"**Méthadonémie attendue**: {expected_methadone:.2f} ng/mL")
     st.write(f"**EDDP attendu**: {expected_eddp:.2f} ng/mL")
+    
+    st.write("## Tableau de classification du métabolisme")
+    st.write("| Situation clinique | Méthadone plasmatique | EDDP | Interprétation |")
+    st.write("|-------------------|----------------------|------|----------------|")
+    st.write("| **Réponse normale** | 100-400 ng/mL | 30-300 ng/mL | Métabolisation standard |")
+    st.write("| **Métabolisation rapide** | < 100 ng/mL | > 300 ng/mL | Fort métabolisme hépatique → risque de manque en fin de journée → besoin de dose fractionnée |")
+    st.write("| **Métabolisation lente** | > 400-600 ng/mL | < 30 ng/mL | Accumulation de méthadone → risque de sédation et QT long → réduire la dose |")
