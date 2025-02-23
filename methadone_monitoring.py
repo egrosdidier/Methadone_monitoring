@@ -55,7 +55,7 @@ st.title("Évaluation de la Méthadonémie")
 
 dose = st.number_input("Dose quotidienne de méthadone (mg)", min_value=1, max_value=300, value=60)
 weight = st.number_input("Poids du patient (kg)", min_value=30, max_value=150, value=70)
-half_life = st.slider("Demi-vie de la méthadone (h)", min_value=10, max_value=60, value=48)
+half_life = st.slider("Demi-vie de la méthadone (h)", min_value=10, max_value=60, value=24)
 time_since_last_dose = st.number_input("Temps depuis la dernière prise (h)", min_value=1, max_value=48, value=12)
 methadone_measured = st.number_input("Méthadonémie mesurée (ng/mL)", min_value=0, max_value=2000, value=350)
 eddp_measured = st.number_input("EDDP mesuré (ng/mL)", min_value=0, max_value=2000, value=120)
