@@ -23,8 +23,15 @@ def calculate_eddp_concentration(methadone_expected):
     """
     Estime la concentration attendue d'EDDP en fonction de la méthadonémie attendue.
     """
-    expected_eddp = methadone_expected * 0.5  # Ratio moyen EDDP/Méthadone
+    expected_eddp = methadone_expected * 0.3  # Ratio moyen EDDP/Méthadone ajusté
     return expected_eddp
+
+def confidence_interval(value, error_percentage=20):
+    """
+    Retourne une fourchette autour d'une valeur donnée avec un pourcentage d'erreur défini.
+    """
+    error_margin = value * (error_percentage / 100)
+    return value - error_margin, value + error_margin
 
 def evaluate_metabolism(methadone_measured, eddp_measured):
     """
@@ -33,9 +40,9 @@ def evaluate_metabolism(methadone_measured, eddp_measured):
     if eddp_measured == 0:
         return "Métabolisation très lente"
     ratio = methadone_measured / eddp_measured
-    if ratio > 1.5:
+    if ratio > 2.0:
         return "Métaboliseur lent"
-    elif ratio < 0.7:
+    elif ratio < 1.0:
         return "Métaboliseur rapide"
     else:
         return "Métaboliseur normal"
@@ -44,16 +51,17 @@ def assess_risk(methadone_measured, expected_methadone):
     """
     Évalue le risque de sous-dosage ou surdosage en comparant la méthadonémie mesurée à celle attendue.
     """
-    if methadone_measured < expected_methadone * 0.8:
+    lower_bound, upper_bound = confidence_interval(expected_methadone)
+    if methadone_measured < lower_bound:
         return "Sous-dosage (risque de manque)"
-    elif methadone_measured > expected_methadone * 1.2:
+    elif methadone_measured > upper_bound:
         return "Risque de surdosage (toxicité)"
     else:
         return "Dose dans la zone thérapeutique"
 
 def plot_methadone_curves(dose, weight, half_life, time_since_last_dose, methadone_measured):
     """
-    Trace la courbe pharmacocinétique de la méthadone pour le patient et une courbe standard.
+    Trace les courbes pharmacocinétiques de la méthadone pour le patient et une courbe standard.
     """
     time = np.linspace(0, 48, 100)  # Temps en heures
     patient_concentrations = [calculate_methadone_concentration(dose, weight, half_life, t) for t in time]
@@ -88,11 +96,13 @@ eddp_measured = st.number_input("EDDP mesuré (ng/mL)", min_value=0, max_value=2
 if st.button("Évaluer"):
     methadone_expected = calculate_methadone_concentration(dose, weight, half_life, time_since_last_dose, steady_state=True)
     eddp_expected = calculate_eddp_concentration(methadone_expected)
+    methadone_range = confidence_interval(methadone_expected)
+    eddp_range = confidence_interval(eddp_expected)
     metabolism_type = evaluate_metabolism(methadone_measured, eddp_measured)
     risk_evaluation = assess_risk(methadone_measured, methadone_expected)
     
-    st.write(f"**Méthadonémie attendue (à l'équilibre)**: {methadone_expected:.2f} ng/mL")
-    st.write(f"**EDDP attendu**: {eddp_expected:.2f} ng/mL")
+    st.write(f"**Méthadonémie attendue (à l'équilibre)**: {methadone_range[0]:.2f} - {methadone_range[1]:.2f} ng/mL")
+    st.write(f"**EDDP attendu**: {eddp_range[0]:.2f} - {eddp_range[1]:.2f} ng/mL")
     st.write(f"**Profil métabolique**: {metabolism_type}")
     st.write(f"**Évaluation du risque**: {risk_evaluation}")
     
