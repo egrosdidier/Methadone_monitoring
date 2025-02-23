@@ -14,8 +14,8 @@ def calculate_methadone_concentration(dose, weight, half_life, time_since_last_d
         accumulation_factor = 1 / (1 - np.exp(-0.693 * 24 / half_life))
         concentration = (dose * accumulation_factor / (volume_distribution * weight)) * np.exp(-0.693 * time_since_last_dose / half_life)
         
-        # Ajustement pour s'assurer que la méthadonémie attendue reste dans la plage physiologique
-        concentration = max(min(concentration * 1000, 400), 100)
+        # Ajustement pour éviter des valeurs excessives
+        concentration = max(min(concentration, 0.4), 0.1)  # Normalisation entre 0.1 et 0.4 mg/L
     else:
         # Concentration pour une seule prise
         concentration = (dose / (volume_distribution * weight)) * np.exp(-0.693 * time_since_last_dose / half_life)
