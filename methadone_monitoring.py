@@ -25,29 +25,30 @@ def evaluate_metabolism(methadone_measured, eddp_measured):
     else:
         return "Métaboliseur normal"
 
-def assess_risk(methadone_measured):
+def assess_risk(methadone_measured, expected_methadone):
     """
-    Évalue le risque de sous-dosage ou surdosage.
+    Évalue le risque de sous-dosage ou surdosage en comparant la méthadonémie mesurée à celle attendue.
     """
-    if methadone_measured < 100:
+    if methadone_measured < expected_methadone * 0.8:
         return "Sous-dosage (risque de manque)"
-    elif methadone_measured > 600:
+    elif methadone_measured > expected_methadone * 1.2:
         return "Risque de surdosage (toxicité)"
     else:
         return "Dose dans la zone thérapeutique"
 
-def plot_methadone_curve(dose, weight, half_life):
+def plot_methadone_curve(dose, weight, half_life, time_since_last_dose):
     """
     Trace la courbe pharmacocinétique de la méthadone avec les zones de risque.
     """
     time = np.linspace(0, 48, 100)  # Temps en heures
-    concentrations = calculate_methadone_concentration(dose, weight, half_life, time)
+    concentrations = [calculate_methadone_concentration(dose, weight, half_life, t) for t in time]
     
     fig, ax = plt.subplots()
     ax.plot(time, concentrations, label="Concentration plasmatique")
     ax.axhline(100, color='green', linestyle='--', label='Seuil bas (100 ng/mL)')
     ax.axhline(400, color='blue', linestyle='--', label='Zone thérapeutique (400 ng/mL)')
     ax.axhline(600, color='red', linestyle='--', label='Risque de toxicité (600 ng/mL)')
+    ax.axvline(time_since_last_dose, color='purple', linestyle='--', label='Moment du prélèvement')
     ax.set_xlabel("Temps depuis la dernière prise (h)")
     ax.set_ylabel("Concentration de méthadone (ng/mL)")
     ax.set_title("Courbe pharmacocinétique de la méthadone")
@@ -67,11 +68,10 @@ eddp_measured = st.number_input("EDDP mesuré (ng/mL)", min_value=0, max_value=2
 if st.button("Évaluer"):
     methadone_expected = calculate_methadone_concentration(dose, weight, half_life, time_since_last_dose)
     metabolism_type = evaluate_metabolism(methadone_measured, eddp_measured)
-    risk_evaluation = assess_risk(methadone_measured)
+    risk_evaluation = assess_risk(methadone_measured, methadone_expected)
     
     st.write(f"**Méthadonémie attendue**: {methadone_expected:.2f} ng/mL")
     st.write(f"**Profil métabolique**: {metabolism_type}")
     st.write(f"**Évaluation du risque**: {risk_evaluation}")
     
-    plot_methadone_curve(dose, weight, half_life)
-
+    plot_methadone_curve(dose, weight, half_life, time_since_last_dose)
