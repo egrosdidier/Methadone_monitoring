@@ -33,19 +33,24 @@ def confidence_interval(value, error_percentage=20):
     error_margin = value * (error_percentage / 100)
     return value - error_margin, value + error_margin
 
-def evaluate_metabolism(methadone_measured, eddp_measured):
+def evaluate_metabolism_probabilities(methadone_measured, eddp_measured):
     """
-    Évalue le profil de métabolisation selon le ratio méthadone/EDDP.
+    Retourne les probabilités d'être métaboliseur normal, lent ou rapide selon le ratio méthadone/EDDP.
     """
     if eddp_measured == 0:
-        return "Métabolisation très lente"
+        return {"Métabolisation très lente": 1.0, "Métaboliseur lent": 0.0, "Métaboliseur normal": 0.0, "Métaboliseur rapide": 0.0}
+    
     ratio = methadone_measured / eddp_measured
+    
+    # Définition des probabilités en fonction des seuils flous
     if ratio > 2.5:
-        return "Métaboliseur lent"
+        probabilities = {"Métaboliseur lent": 0.8, "Métaboliseur normal": 0.15, "Métaboliseur rapide": 0.05}
     elif 1.0 <= ratio <= 2.5:
-        return "Métaboliseur normal"
+        probabilities = {"Métaboliseur lent": 0.2, "Métaboliseur normal": 0.7, "Métaboliseur rapide": 0.1}
     else:
-        return "Métaboliseur rapide"
+        probabilities = {"Métaboliseur lent": 0.05, "Métaboliseur normal": 0.2, "Métaboliseur rapide": 0.75}
+    
+    return probabilities
 
 def assess_risk(methadone_measured, expected_methadone):
     """
@@ -98,12 +103,14 @@ if st.button("Évaluer"):
     eddp_expected = calculate_eddp_concentration(methadone_expected)
     methadone_range = confidence_interval(methadone_expected)
     eddp_range = confidence_interval(eddp_expected)
-    metabolism_type = evaluate_metabolism(methadone_measured, eddp_measured)
+    metabolism_probabilities = evaluate_metabolism_probabilities(methadone_measured, eddp_measured)
     risk_evaluation = assess_risk(methadone_measured, methadone_expected)
     
     st.write(f"**Méthadonémie attendue (à l'équilibre)**: {methadone_range[0]:.2f} - {methadone_range[1]:.2f} ng/mL")
     st.write(f"**EDDP attendu**: {eddp_range[0]:.2f} - {eddp_range[1]:.2f} ng/mL")
-    st.write(f"**Profil métabolique**: {metabolism_type}")
+    st.write("**Probabilités de métabolisation**:")
+    for key, value in metabolism_probabilities.items():
+        st.write(f"{key}: {value*100:.1f}%")
     st.write(f"**Évaluation du risque**: {risk_evaluation}")
     
     plot_methadone_curves(dose, weight, half_life, time_since_last_dose, methadone_measured)
