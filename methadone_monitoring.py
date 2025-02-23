@@ -14,7 +14,7 @@ def calculate_methadone_concentration(dose, weight, half_life, time_since_last_d
         accumulation_factor = 1 / (1 - np.exp(-0.693 * 24 / half_life))
         concentration = (dose * accumulation_factor / (volume_distribution * weight)) * np.exp(-0.693 * time_since_last_dose / half_life)
         
-        # Ajustement pour éviter des valeurs excessives
+        # Correction pour s'assurer que la valeur attendue reste dans une plage clinique cohérente
         concentration = max(min(concentration, 0.4), 0.1)  # Normalisation entre 0.1 et 0.4 mg/L
     else:
         # Concentration pour une seule prise
@@ -38,8 +38,8 @@ def plot_methadone_curves(dose, weight, half_life, time_since_last_dose, methado
     patient_concentrations = [calculate_methadone_concentration(dose, weight, half_life, t, steady_state=False) for t in time]
     
     fig, ax = plt.subplots()
-    ax.plot(time, expected_concentrations, label="Courbe du patient (observée)", linestyle='dashed', color='gray')
-    ax.plot(time, patient_concentrations, label="Courbe attendue (modèle)", color='blue')
+    ax.plot(time, patient_concentrations, label="Courbe du patient (observée)", linestyle='dashed', color='gray')
+    ax.plot(time, expected_concentrations, label="Courbe attendue (modèle)", color='blue')
     ax.axhline(100, color='green', linestyle='--', label='Seuil bas (100 ng/mL)')
     ax.axhline(400, color='blue', linestyle='--', label='Zone thérapeutique (400 ng/mL)')
     ax.axhline(600, color='red', linestyle='--', label='Risque de toxicité (600 ng/mL)')
@@ -51,7 +51,7 @@ def plot_methadone_curves(dose, weight, half_life, time_since_last_dose, methado
     ax.legend()
     st.pyplot(fig)
     
-    return expected_concentrations[-1], calculate_eddp_concentration(expected_concentrations[-1])
+    return expected_concentrations[np.argmin(np.abs(np.array(time) - time_since_last_dose))], calculate_eddp_concentration(expected_concentrations[np.argmin(np.abs(np.array(time) - time_since_last_dose))])
 
 # Interface Streamlit
 st.title("Évaluation de la Méthadonémie")
