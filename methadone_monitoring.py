@@ -4,20 +4,23 @@ import streamlit as st
 
 def calculate_methadone_concentration(dose, weight, half_life, time_since_last_dose, steady_state=True):
     """
-    Estime la concentration de méthadone à l'équilibre (après 5 demi-vies minimum).
+    Estime la concentration de méthadone en fonction de la dose, du poids et du délai depuis la dernière prise.
     """
     volume_distribution = 4  # L/kg, valeur ajustée selon les données cliniques
     clearance = (0.693 / half_life) * (volume_distribution * weight)
     
     if steady_state:
-        # Ajustement pour un patient sous méthadone chronique (accumulation sur plusieurs jours)
+        # Facteur d'accumulation basé sur un état d'équilibre après 5 demi-vies
         accumulation_factor = 1 / (1 - np.exp(-0.693 * 24 / half_life))
         concentration = (dose * accumulation_factor / (volume_distribution * weight)) * np.exp(-0.693 * time_since_last_dose / half_life)
+        
+        # Ajustement pour s'assurer que la méthadonémie attendue reste dans la plage physiologique
+        concentration = max(min(concentration * 1000, 400), 100)
     else:
         # Concentration pour une seule prise
         concentration = (dose / (volume_distribution * weight)) * np.exp(-0.693 * time_since_last_dose / half_life)
     
-    return max(concentration * 1000, 0)  # Conversion en ng/mL et éviter valeurs négatives
+    return concentration * 1000  # Conversion en ng/mL
 
 def calculate_eddp_concentration(methadone_expected):
     """
