@@ -34,8 +34,12 @@ def plot_methadone_curves(dose, weight, half_life, time_since_last_dose, methado
     Trace les courbes pharmacocinétiques de la méthadone pour le patient et une courbe attendue (modèle).
     """
     time = np.linspace(0, 48, 100)
-    expected_concentrations = [calculate_methadone_concentration(dose, weight, half_life, t, steady_state=True) for t in time]
-    patient_concentrations = [calculate_methadone_concentration(dose, weight, half_life, t, steady_state=False) for t in time]
+    expected_concentrations = np.array([calculate_methadone_concentration(dose, weight, half_life, t, steady_state=True) for t in time])
+    patient_concentrations = np.array([calculate_methadone_concentration(dose, weight, half_life, t, steady_state=False) for t in time])
+    
+    # Trouver la valeur attendue à l'instant du prélèvement
+    idx = np.argmin(np.abs(time - time_since_last_dose))
+    expected_at_sample = expected_concentrations[idx]
     
     fig, ax = plt.subplots()
     ax.plot(time, expected_concentrations, label="Courbe attendue (modèle)", color='blue')
@@ -51,7 +55,7 @@ def plot_methadone_curves(dose, weight, half_life, time_since_last_dose, methado
     ax.legend()
     st.pyplot(fig)
     
-    return expected_concentrations[np.argmin(np.abs(np.array(time) - time_since_last_dose))], calculate_eddp_concentration(expected_concentrations[np.argmin(np.abs(np.array(time) - time_since_last_dose))])
+    return expected_at_sample, calculate_eddp_concentration(expected_at_sample)
 
 # Interface Streamlit
 st.title("Évaluation de la Méthadonémie")
