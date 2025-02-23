@@ -10,12 +10,12 @@ def calculate_methadone_concentration(dose, weight, half_life, time_since_last_d
     clearance = (0.693 / half_life) * (volume_distribution * weight)
     
     if steady_state:
-        # Facteur d'accumulation basé sur un état d'équilibre après 5 demi-vies
+        # Facteur d'accumulation basé sur un état d'équilibre après plusieurs jours (prise quotidienne)
         accumulation_factor = 1 / (1 - np.exp(-0.693 * 24 / half_life))
         concentration = (dose * accumulation_factor / (volume_distribution * weight)) * np.exp(-0.693 * time_since_last_dose / half_life)
         
-        # Correction pour s'assurer que la valeur attendue reste dans une plage clinique cohérente
-        concentration = max(min(concentration, 0.4), 0.1)  # Normalisation entre 0.1 et 0.4 mg/L
+        # Ajustement pour s'assurer que la valeur attendue reste dans une plage clinique cohérente
+        concentration = max(min(concentration * 1000, 400), 100)  # Normalisation entre 100 et 400 ng/mL
     else:
         # Concentration pour une seule prise
         concentration = (dose / (volume_distribution * weight)) * np.exp(-0.693 * time_since_last_dose / half_life)
@@ -26,7 +26,7 @@ def calculate_eddp_concentration(methadone_expected):
     """
     Estime la concentration attendue d'EDDP en fonction de la méthadonémie attendue.
     """
-    expected_eddp = methadone_expected * 0.4  # Ratio ajusté pour correspondre aux valeurs cliniques
+    expected_eddp = methadone_expected * 0.3  # Ratio ajusté pour éviter une surestimation
     return expected_eddp
 
 def plot_methadone_curves(dose, weight, half_life, time_since_last_dose, methadone_measured):
@@ -38,8 +38,8 @@ def plot_methadone_curves(dose, weight, half_life, time_since_last_dose, methado
     patient_concentrations = [calculate_methadone_concentration(dose, weight, half_life, t, steady_state=False) for t in time]
     
     fig, ax = plt.subplots()
-    ax.plot(time, patient_concentrations, label="Courbe du patient (observée)", linestyle='dashed', color='gray')
     ax.plot(time, expected_concentrations, label="Courbe attendue (modèle)", color='blue')
+    ax.plot(time, patient_concentrations, label="Courbe du patient (observée)", linestyle='dashed', color='gray')
     ax.axhline(100, color='green', linestyle='--', label='Seuil bas (100 ng/mL)')
     ax.axhline(400, color='blue', linestyle='--', label='Zone thérapeutique (400 ng/mL)')
     ax.axhline(600, color='red', linestyle='--', label='Risque de toxicité (600 ng/mL)')
