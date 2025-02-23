@@ -36,22 +36,25 @@ def assess_risk(methadone_measured, expected_methadone):
     else:
         return "Dose dans la zone thérapeutique"
 
-def plot_methadone_curve(dose, weight, half_life, time_since_last_dose):
+def plot_methadone_curves(dose, weight, half_life, time_since_last_dose, methadone_measured):
     """
-    Trace la courbe pharmacocinétique de la méthadone avec les zones de risque.
+    Trace la courbe pharmacocinétique de la méthadone pour le patient et une courbe standard.
     """
     time = np.linspace(0, 48, 100)  # Temps en heures
-    concentrations = [calculate_methadone_concentration(dose, weight, half_life, t) for t in time]
+    patient_concentrations = [calculate_methadone_concentration(dose, weight, half_life, t) for t in time]
+    standard_concentrations = [calculate_methadone_concentration(dose, weight, 24, t) for t in time]  # Demi-vie standard de 24h
     
     fig, ax = plt.subplots()
-    ax.plot(time, concentrations, label="Concentration plasmatique")
+    ax.plot(time, patient_concentrations, label="Courbe du patient", color='blue')
+    ax.plot(time, standard_concentrations, label="Courbe standard (Demi-vie 24h)", linestyle='dashed', color='gray')
     ax.axhline(100, color='green', linestyle='--', label='Seuil bas (100 ng/mL)')
     ax.axhline(400, color='blue', linestyle='--', label='Zone thérapeutique (400 ng/mL)')
     ax.axhline(600, color='red', linestyle='--', label='Risque de toxicité (600 ng/mL)')
     ax.axvline(time_since_last_dose, color='purple', linestyle='--', label='Moment du prélèvement')
+    ax.scatter([time_since_last_dose], [methadone_measured], color='red', label='Méthadonémie mesurée')
     ax.set_xlabel("Temps depuis la dernière prise (h)")
     ax.set_ylabel("Concentration de méthadone (ng/mL)")
-    ax.set_title("Courbe pharmacocinétique de la méthadone")
+    ax.set_title("Courbes pharmacocinétiques : Patient vs Standard")
     ax.legend()
     st.pyplot(fig)
 
@@ -74,4 +77,4 @@ if st.button("Évaluer"):
     st.write(f"**Profil métabolique**: {metabolism_type}")
     st.write(f"**Évaluation du risque**: {risk_evaluation}")
     
-    plot_methadone_curve(dose, weight, half_life, time_since_last_dose)
+    plot_methadone_curves(dose, weight, half_life, time_since_last_dose, methadone_measured)
