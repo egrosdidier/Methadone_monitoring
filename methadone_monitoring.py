@@ -12,12 +12,19 @@ def calculate_methadone_concentration(dose, weight, half_life, time_since_last_d
     if steady_state:
         # Ajustement pour un patient à l'équilibre plasmatique (prise chronique)
         accumulation_factor = 1 / (1 - np.exp(-0.693 * 24 / half_life))
-        concentration = (dose / (volume_distribution * weight)) * accumulation_factor * np.exp(-0.693 * time_since_last_dose / half_life)
+        concentration = (dose * accumulation_factor / (volume_distribution * weight)) * np.exp(-0.693 * time_since_last_dose / half_life)
     else:
         # Concentration pour une seule prise
         concentration = (dose / (volume_distribution * weight)) * np.exp(-0.693 * time_since_last_dose / half_life)
     
     return max(concentration * 1000, 0)  # conversion en ng/mL et éviter valeurs négatives
+
+def calculate_eddp_concentration(methadone_expected):
+    """
+    Estime la concentration attendue d'EDDP en fonction de la méthadonémie attendue.
+    """
+    expected_eddp = methadone_expected * 0.5  # Ratio moyen EDDP/Méthadone
+    return expected_eddp
 
 def evaluate_metabolism(methadone_measured, eddp_measured):
     """
@@ -26,9 +33,9 @@ def evaluate_metabolism(methadone_measured, eddp_measured):
     if eddp_measured == 0:
         return "Métabolisation très lente"
     ratio = methadone_measured / eddp_measured
-    if ratio > 2:
+    if ratio > 1.5:
         return "Métaboliseur lent"
-    elif ratio < 0.5:
+    elif ratio < 0.7:
         return "Métaboliseur rapide"
     else:
         return "Métaboliseur normal"
@@ -80,10 +87,12 @@ eddp_measured = st.number_input("EDDP mesuré (ng/mL)", min_value=0, max_value=2
 
 if st.button("Évaluer"):
     methadone_expected = calculate_methadone_concentration(dose, weight, half_life, time_since_last_dose, steady_state=True)
+    eddp_expected = calculate_eddp_concentration(methadone_expected)
     metabolism_type = evaluate_metabolism(methadone_measured, eddp_measured)
     risk_evaluation = assess_risk(methadone_measured, methadone_expected)
     
     st.write(f"**Méthadonémie attendue (à l'équilibre)**: {methadone_expected:.2f} ng/mL")
+    st.write(f"**EDDP attendu**: {eddp_expected:.2f} ng/mL")
     st.write(f"**Profil métabolique**: {metabolism_type}")
     st.write(f"**Évaluation du risque**: {risk_evaluation}")
     
