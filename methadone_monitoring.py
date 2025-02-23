@@ -14,13 +14,13 @@ def calculate_methadone_concentration(dose, weight, half_life, time_since_last_d
         accumulation_factor = 1 / (1 - np.exp(-0.693 * 24 / half_life))
         concentration = (dose * accumulation_factor / (volume_distribution * weight)) * np.exp(-0.693 * time_since_last_dose / half_life)
         
-        # Ajustement pour s'assurer que la valeur attendue reste dans une plage clinique cohérente
-        concentration = max(min(concentration * 1000, 400), 100)  # Normalisation entre 100 et 400 ng/mL
+        # Correction pour éviter les valeurs extrêmes
+        concentration = min(concentration * 1000, 400)  # Limité à 400 ng/mL max
     else:
         # Concentration pour une seule prise
-        concentration = (dose / (volume_distribution * weight)) * np.exp(-0.693 * time_since_last_dose / half_life)
+        concentration = (dose / (volume_distribution * weight)) * np.exp(-0.693 * time_since_last_dose / half_life) * 1000
     
-    return concentration * 1000  # Conversion en ng/mL
+    return max(concentration, 0)  # Conversion en ng/mL et éviter les valeurs négatives
 
 def calculate_eddp_concentration(methadone_expected):
     """
